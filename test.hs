@@ -1,28 +1,45 @@
-lcg :: Integer -> [Double]
-lcg seed = map (\x -> fromIntegral (x `mod` 10000) / 10000.0) $ iterate (\x -> (1103515245 * x + 12345) `mod` 2147483648) seed
+module Main where
+import System.Environment (getArgs)
+import Text.Read (readMaybe)
+import Control.Monad (forM_)
 
-s0, k, r, sigma, t :: Double
-s0 = 100
-k = 110
-r = 0.05
-sigma = 0.2
-t = 1.0
+{-
+// stdin
+main :: IO ()
+main = do
+    input <- getLine
+    putStrLn input
+-}
 
-nSim :: Int
-nSim = 10000
+{-
+fibonacci :: Int -> Integer
+fibonacci 0 = 0
+fibonacci 1 = 1
+fibonacci n = fibonacci (n - 1) + fibonacci (n - 2)
+-}
 
-simulatePrice :: Double -> Double -> Double -> Double -> Double -> Double
-simulatePrice s0 r sigma t z = s0 * exp ((r - 0.5 * sigma^2) * t + sigma * sqrt t * z)
+isPrime :: Int -> Bool
+isPrime n
+    | n < 2     = False
+    | otherwise = null [x | x <- [2..floor (sqrt (fromIntegral n))], n `mod` x == 0]
 
-monteCarloPrice :: Int -> Double
-monteCarloPrice n =
-    let zs = take n (lcg 42) 
-        prices = map (simulatePrice s0 r sigma t) zs
-        payoffs = map (\st -> max (st - k) 0) prices
-        avgPayoff = sum payoffs / fromIntegral n
-    in exp (-r * t) * avgPayoff
+primesUpTo :: Int -> [Int]
+primesUpTo n = filter isPrime [2..n]
+
+filterPrimes :: Maybe Int -> [Int] -> [Int]
+filterPrimes Nothing xs  = xs
+filterPrimes (Just m) xs = filter (>= m) xs
 
 main :: IO ()
 main = do
-    let price = monteCarloPrice nSim
-    putStrLn $ "European Call Option Price: " ++ show price
+    args <- getArgs
+    case args of
+        (nArg:rest) -> case readMaybe nArg of
+            Just n -> do
+                let minFilter = case rest of
+                                  (mArg:_) -> readMaybe mArg
+                                  []       -> Nothing
+                let primes = filterPrimes minFilter (primesUpTo n)
+                putStrLn $ "Primes: " ++ show primes
+            Nothing -> putStrLn "First argument must be an integer"
+        [] -> putStrLn "Usage: program <max> [minFilter]"
