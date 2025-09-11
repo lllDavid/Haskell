@@ -12,7 +12,7 @@ main = do
 symbol :: Parser Char
 symbol = oneOf "!$%&|*+ -/: <=? >@^_~#"
 
-readExpr input = case parse parseExpr "lisp" input of 
+readExpr input = case parse parseExpr "input" input of 
     Left err -> "No match: " ++ show err
     Right val -> "Found Value"
 
